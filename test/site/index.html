@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <script type="text/javascript" src="socket.io.js"></script>
+        <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+        <title>Super</title>
+    </head>
+    <body>
+        <div>
+            <button id="searchBtn">Search</button>
+        </div>
+        
+        <div>
+            <input id="itemNumberInput" autocomplete="off" /><button id="itemNumberBtn">Send</button>
+        </div>
+        
+        <div>
+            <button id="copairBtn">Co/pair</button>
+        </div>
+        
+        <div>
+            <button id="turnonBtn">Turn ON</button>
+        </div>
+        
+        <script>
+            var socket = io();
+            $('#searchBtn').click(function(){
+                socket.emit('search', 'blabla');
+            });
+            
+            $('#itemNumberBtn').click(function(){
+                socket.emit('periph_co', $('#itemNumberInput').val());
+            });
+            
+            $('#copairBtn').click(function(){
+                socket.emit('co_pair', 'blabla');
+            });
+            
+            $('#turnonBtn').click(function(){
+                socket.emit('turn_on', 'blabla');
+            });
+            
+            socket.on('discover', function (message) {
+              console.log('discover : ' + message);
+            });
+        </script>
+    </body>
+</html>

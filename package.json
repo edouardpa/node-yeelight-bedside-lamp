@@ -6,6 +6,8 @@
   "repository": "",
   "author": "EdouardP",
   "dependencies": {
-    "noble": "*"
+    "noble": "*",
+    "socket.io": "*", 
+    "express": "*"
   }
 }
