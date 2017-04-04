@@ -19,7 +19,11 @@
         </div>
         
         <div>
-            <button id="turnonBtn">Turn ON</button>
+            <button id="statusBtn">Status</button>
+        </div>
+        
+        <div>
+            <button id="turnonBtn">Turn ON</button><button id="turnoffBtn">Turn OFF</button>
         </div>
         
         <script>
@@ -40,8 +44,24 @@
                 socket.emit('turn_on', 'blabla');
             });
             
+            $('#turnoffBtn').click(function(){
+                socket.emit('turn_off', 'blabla');
+            });
+            
+            $('#statusBtn').click(function(){
+                socket.emit('status', 'blabla');
+            });
+            
             socket.on('discover', function (message) {
               console.log('discover : ' + message);
+            });
+            
+            socket.on('notifs', function (message) {
+              console.log('notifs : ' + message);
+            });
+            
+            socket.on('status', function (message) {
+              console.log('status : ' + message);
             });
         </script>
     </body>

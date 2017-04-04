@@ -20,6 +20,10 @@ var io = require('socket.io').listen(server);
 io.sockets.on('connection', function (socket) {
   console.log('A client has connected !');
   
+  function notifs(message){
+    socket.emit('notifs', 'notifs : '+ JSON.stringify(message));
+  }
+  
   socket.on('search', function (message) {
     console.log('Search !!!');
     
@@ -34,17 +38,32 @@ io.sockets.on('connection', function (socket) {
     
     yee.YeelightBluetooth.Connect(periphs[message], function(yeeobj){
       yeee = yeeobj;
+      yeee.SetNotificationCallback(notifs);
     });
   });
   
   socket.on('co_pair', function(message) {
     console.log('co pair !!');
-    yeee.ConnectPair();
+    yeee.ConnectPair(function(result) {
+      socket.emit('notifs', 'CO pair : ' + JSON.stringify(result));
+    });
   });
   
   socket.on('turn_on', function(message) {
     console.log('turn on !!');
     yeee.TurnOn();
+  });
+  
+  socket.on('turn_off', function(message) {
+    console.log('turn off !!');
+    yeee.TurnOff();
+  });
+  
+  socket.on('status', function(message) {
+    console.log('get status !!');
+    yeee.LampState(function(status){
+      socket.emit('status', 'Lamp : ' + JSON.stringify(status));
+    });
   });
   
   socket.on('disconnect', function () {
