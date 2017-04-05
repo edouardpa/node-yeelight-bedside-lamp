@@ -1,4 +1,5 @@
 var noble = require("noble");
+var debug = require("debug");
 
 var BS_LAMP_NAME = 'XMCTD_';
 var SERVICE_UUID = '8e2f0cbd1a664b53ace6b494e25f87bd';
@@ -50,27 +51,31 @@ function YeelightLamp(peripheral) {
   this.connectPairCallback = null;
   this.lampStateCallback = null;
   
+  function parsePairingStatus(pairStatusString){
+    if(pairStatusString == '01')
+      return YeelightLamp.ConnectPairEnum.UNAUTHORIZED;
+    else if(pairStatusString == '02')
+      return YeelightLamp.ConnectPairEnum.PAIRED;
+    else if(pairStatusString == '04')
+      return YeelightLamp.ConnectPairEnum.AUTHORIZED;
+    else if(pairStatusString == '07')
+      return YeelightLamp.ConnectPairEnum.DISCONNECT_IMMINENT;
+    else
+      console.log('WARNING !!!!!!!!! : unknown code !');
+  }
+  
   function notificationReceived(data) {
     console.log('Notification : '+ data.toString('hex'));
     
     var packetType = data.toString('hex').substring(2,4);
-    //console.log('DEBUG : (packet type)'+packetType);
+    debug('DEBUG : (packet type)'+packetType);
     
     //TODO keep going on implementation
-    if(packetType == '63' && self.connectPairCallback != null){ //TODO make this part of code reusable
+    if(packetType == '63' && self.connectPairCallback != null){
       var status = data.toString('hex').substring(4,6);
-      //console.log('DEBUG : (status)'+status);
+      debug('DEBUG : (status)'+status);
       
-      if(status == '01')
-        self.connectPairCallback(YeelightLamp.ConnectPairEnum.UNAUTHORIZED);
-      else if(status == '02')
-        self.connectPairCallback(YeelightLamp.ConnectPairEnum.PAIRED);
-      else if(status == '04')
-        self.connectPairCallback(YeelightLamp.ConnectPairEnum.AUTHORIZED);
-      else if(status == '07')
-        self.connectPairCallback(YeelightLamp.ConnectPairEnum.DISCONNECT_IMMINENT);
-      else
-        console.log('WARNING !!!!!!!!! : unknown code !');
+      self.connectPairCallback(parsePairingStatus(status));
         
       self.connectPairCallback = null;
     }
@@ -81,19 +86,10 @@ function YeelightLamp(peripheral) {
     }
     else if(packetType == '45' && self.notifCallback != null)
       self.notifCallback(new LampStatus(data.toString('hex')));
-    else if(packetType == '63' && self.notifCallback != null){ //TODO make this part of code reusable
+    else if(packetType == '63' && self.notifCallback != null){
       var status = data.toString('hex').substring(4,6);
       
-      if(status == '01')
-        self.notifCallback(YeelightLamp.ConnectPairEnum.UNAUTHORIZED);
-      else if(status == '02')
-        self.notifCallback(YeelightLamp.ConnectPairEnum.PAIRED);
-      else if(status == '04')
-        self.notifCallback(YeelightLamp.ConnectPairEnum.AUTHORIZED);
-      else if(status == '07')
-        self.notifCallback(YeelightLamp.ConnectPairEnum.DISCONNECT_IMMINENT);
-      else
-        console.log('WARNING !!!!!!!!! : unknown code !');
+      self.notifCallback(parsePairingStatus(status));
     }
     else
       console.log('WARNING !!!!!!!!! : unknown packet type !');
@@ -182,13 +178,81 @@ function YeelightLamp(peripheral) {
   self.LampState = function(callback) {
     self.lampStateCallback = callback;
     
-    self.commandCharact.write(Buffer.from('434002000000000000000000000000000000', 'hex'), false, function(error) {
+    self.commandCharact.write(Buffer.from('434400000000000000000000000000000000', 'hex'), false, function(error) {
       if (!error) {
         console.log('pas error');
       } else {
         console.log('error');
       }
-      console.log('send turn off command');
+      console.log('send state get command');
+    });
+  }
+  
+  self.WhiteLight = function(temperature, brightness) {
+    temperature = Number(temperature);
+    brightness = Number(brightness);
+    
+    if(temperature < 1700 || temperature > 6500)
+      throw "temperature value out of range (1700-6500)"
+    if(brightness < 1 || brightness > 100)
+      throw "brightness value out of range (1-100)"
+      
+    var tempHex = temperature.toString(16);
+    if(tempHex.length < 4)
+      tempHex = '0' + tempHex;
+      
+    var brightHex = brightness.toString(16);
+    if(brightHex.length < 2)
+      brightHex = '0' + brightHex;
+    
+    self.commandCharact.write(Buffer.from('4343' + tempHex + '' + brightHex + '00000000000000000000000000', 'hex'), false, function(error) {
+      if (!error) {
+        console.log('pas error');
+      } else {
+        console.log('error');
+      }
+      console.log('send warm light command');
+    });
+  }
+  
+  self.RGBLight = function(red, green, blue, brightness) {
+    red = Number(red);
+    green = Number(green);
+    blue = Number(blue);
+    brightness = Number(brightness);
+    
+    if(red < 0 || red > 255)
+      throw "red value out of range (0-255)"
+    if(green < 0 || green > 255)
+      throw "green value out of range (0-255)"
+    if(blue < 0 || blue > 255)
+      throw "blue value out of range (0-255)"
+    if(brightness < 1 || brightness > 100)
+      throw "brightness value out of range (1-100)"
+      
+    var redHex = red.toString(16);
+    if(redHex.length < 2)
+      redHex = '0' + redHex;
+      
+    var greenHex = green.toString(16);
+    if(greenHex.length < 2)
+      greenHex = '0' + greenHex;
+      
+    var blueHex = blue.toString(16);
+    if(blueHex.length < 2)
+      blueHex = '0' + blueHex;
+      
+    var brightHex = brightness.toString(16);
+    if(brightHex.length < 2)
+      brightHex = '0' + brightHex;
+    
+    self.commandCharact.write(Buffer.from('4341' + redHex + '' + greenHex + '' + blueHex + '00' + brightHex + '0000000000000000000000', 'hex'), false, function(error) {
+      if (!error) {
+        console.log('pas error');
+      } else {
+        console.log('error');
+      }
+      console.log('send rgb light command');
     });
   }
 }
@@ -224,7 +288,7 @@ function LampStatus(stringStatus) { //build a LampStatus object based on hex val
     var _temperature = stringStatus.substring(18, 22);
     var _brightness = stringStatus.substring(16,18);
     
-    this.properties = {temperature: _temperature, brightness: _brightness};
+    this.properties = {temperature: parseInt(_temperature, 16), brightness: parseInt(_brightness, 16)};
   }
   else if(mode == '03')
     this.mode = LampStatus.ModeEnum.FLOW;

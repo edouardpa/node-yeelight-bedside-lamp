@@ -26,6 +26,20 @@
             <button id="turnonBtn">Turn ON</button><button id="turnoffBtn">Turn OFF</button>
         </div>
         
+        <div>
+            <label for="temperatureInput">Temperature</label><input id="temperatureInput" autocomplete="off" type="number" />
+            <label for="brightnessWhiteInput">Brightness</label><input id="brightnessWhiteInput" autocomplete="off" type="number" />
+            <button id="whiteBtn">White</button>
+        </div>
+        
+        <div>
+            <label for="redInput">Red</label><input id="redInput" autocomplete="off" type="number" />
+            <label for="greenInput">Green</label><input id="greenInput" autocomplete="off" type="number" />
+            <label for="blueInput">Blue</label><input id="blueInput" autocomplete="off" type="number" />
+            <label for="brightnessRGBInput">Brightness</label><input id="brightnessRGBInput" autocomplete="off" type="number" />
+            <button id="rgbBtn">RGB</button>
+        </div>
+        
         <script>
             var socket = io();
             $('#searchBtn').click(function(){
@@ -49,7 +63,15 @@
             });
             
             $('#statusBtn').click(function(){
-                socket.emit('status', 'blabla');
+                socket.emit('statusGet', 'blabla');
+            });
+            
+            $('#whiteBtn').click(function(){
+                socket.emit('white', {temperature: $('#temperatureInput').val(), brightness: $('#brightnessWhiteInput').val()});
+            });
+            
+            $('#rgbBtn').click(function(){
+                socket.emit('rgb', {red: $('#redInput').val(), green: $('#greenInput').val(), blue: $('#blueInput').val(), brightness: $('#brightnessRGBInput').val()});
             });
             
             socket.on('discover', function (message) {

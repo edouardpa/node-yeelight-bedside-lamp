@@ -7,8 +7,15 @@ var yee = require('../index.js');
 
 var path = require('path');
 
+var debug = require('debug')('../index.js');
+
 var periphs = [];
 var yeee;
+var _socket;
+
+function notifs(message){
+  _socket.emit('notifs', 'notifs : '+ JSON.stringify(message));
+}
 
 app.get('/', function(req, res) {
     res.sendFile(path.join(__dirname + '/site/index.html'));
@@ -20,9 +27,7 @@ var io = require('socket.io').listen(server);
 io.sockets.on('connection', function (socket) {
   console.log('A client has connected !');
   
-  function notifs(message){
-    socket.emit('notifs', 'notifs : '+ JSON.stringify(message));
-  }
+  _socket = socket;
   
   socket.on('search', function (message) {
     console.log('Search !!!');
@@ -59,7 +64,17 @@ io.sockets.on('connection', function (socket) {
     yeee.TurnOff();
   });
   
-  socket.on('status', function(message) {
+  socket.on('white', function(message) {
+    console.log('white');
+    yeee.WhiteLight(message.temperature, message.brightness);
+  });
+  
+  socket.on('rgb', function(message) {
+    console.log('RGB');
+    yeee.RGBLight(message.red, message.green, message.blue, message.brightness);
+  });
+  
+  socket.on('statusGet', function(message) {
     console.log('get status !!');
     yeee.LampState(function(status){
       socket.emit('status', 'Lamp : ' + JSON.stringify(status));
