@@ -1,5 +1,4 @@
 var noble = require("noble");
-var debug = require("debug");
 
 var BS_LAMP_NAME = 'XMCTD_';
 var SERVICE_UUID = '8e2f0cbd1a664b53ace6b494e25f87bd';
@@ -10,8 +9,8 @@ function YeelightBluetooth() {
   this.DiscoverCallback = null;
 }
 
-YeelightBluetooth.Discover = function(callback, timeout) {
-  this.DiscoverCallback = callback;
+YeelightBluetooth.discover = function(callback, timeout) {
+  this.discoverCallback = callback;
   
   noble.startScanning();
   
@@ -27,7 +26,7 @@ YeelightBluetooth.Discover = function(callback, timeout) {
   }, _timeout);
 }
 
-YeelightBluetooth.Connect = function(peripheral, callback) {
+YeelightBluetooth.connect = function(peripheral, callback) {
   var lamp = new YeelightLamp(peripheral);
   
   callback(lamp);
@@ -39,7 +38,7 @@ noble.on('discover', function(peripheral) {
   console.log();
 
   if(peripheral.advertisement.localName == BS_LAMP_NAME) {
-    YeelightBluetooth.DiscoverCallback(peripheral);
+    YeelightBluetooth.discoverCallback(peripheral);
   }
 });
 
@@ -68,12 +67,12 @@ function YeelightLamp(peripheral) {
     console.log('Notification : '+ data.toString('hex'));
     
     var packetType = data.toString('hex').substring(2,4);
-    debug('DEBUG : (packet type)'+packetType);
+    console.log('DEBUG : (packet type)'+packetType);
     
     //TODO keep going on implementation
     if(packetType == '63' && self.connectPairCallback != null){
       var status = data.toString('hex').substring(4,6);
-      debug('DEBUG : (status)'+status);
+      console.log('DEBUG : (status)'+status);
       
       self.connectPairCallback(parsePairingStatus(status));
         
@@ -107,9 +106,8 @@ function YeelightLamp(peripheral) {
       for (var i in services) {
         console.log('  ' + i + ' uuid: ' + services[i].uuid);
 
-        var _service = services[i];
-        if(_service.uuid == SERVICE_UUID) {
-          _service.discoverCharacteristics(null, function(error, characteristics) {
+        if(services[i].uuid == SERVICE_UUID) {
+          services[i].discoverCharacteristics(null, function(error, characteristics) {
             console.log('discovered the following characteristics:');
 
             for(var i in characteristics) {
@@ -136,11 +134,11 @@ function YeelightLamp(peripheral) {
     });
   });
   
-  self.SetNotificationCallback = function(notCallback) {
+  self.setNotificationCallback = function(notCallback) {
     self.notifCallback = notCallback;
   }
   
-  self.ConnectPair = function(callback) {
+  self.connectPair = function(callback) {
     self.connectPairCallback = callback;
     
     self.commandCharact.write(Buffer.from('436702000000000000000000000000000000', 'hex'), false, function(error) {
@@ -153,7 +151,7 @@ function YeelightLamp(peripheral) {
     });
   }
   
-  self.TurnOn = function() {
+  self.turnOn = function() {
     self.commandCharact.write(Buffer.from('434001000000000000000000000000000000', 'hex'), false, function(error) {
       if (!error) {
         console.log('pas error');
@@ -164,7 +162,7 @@ function YeelightLamp(peripheral) {
     });
   }
   
-  self.TurnOff = function() {
+  self.turnOff = function() {
     self.commandCharact.write(Buffer.from('434002000000000000000000000000000000', 'hex'), false, function(error) {
       if (!error) {
         console.log('pas error');
@@ -175,7 +173,7 @@ function YeelightLamp(peripheral) {
     });
   }
   
-  self.LampState = function(callback) {
+  self.lampState = function(callback) {
     self.lampStateCallback = callback;
     
     self.commandCharact.write(Buffer.from('434400000000000000000000000000000000', 'hex'), false, function(error) {
@@ -188,7 +186,7 @@ function YeelightLamp(peripheral) {
     });
   }
   
-  self.WhiteLight = function(temperature, brightness) {
+  self.whiteLight = function(temperature, brightness) {
     temperature = Number(temperature);
     brightness = Number(brightness);
     
@@ -215,7 +213,7 @@ function YeelightLamp(peripheral) {
     });
   }
   
-  self.RGBLight = function(red, green, blue, brightness) {
+  self.rgbLight = function(red, green, blue, brightness) {
     red = Number(red);
     green = Number(green);
     blue = Number(blue);
@@ -257,14 +255,14 @@ function YeelightLamp(peripheral) {
   }
 }
 
-YeelightLamp.ConnectPairEnum = {
+YeelightLamp.connectPairEnum = {
   UNAUTHORIZED: 1,
   PAIRED: 2,
   AUTHORIZED: 3,
   DISCONNECT_IMMINENT: 4
 };
 
-function LampStatus(stringStatus) { //build a LampStatus object based on hex values
+function lampStatus(stringStatus) { //build a LampStatus object based on hex values
   var power = stringStatus.substring(4,6);
   
   if(power == '01')
@@ -275,7 +273,7 @@ function LampStatus(stringStatus) { //build a LampStatus object based on hex val
   var mode = stringStatus.substring(6,8);
   
   if(mode == '01'){
-    this.mode = LampStatus.ModeEnum.RGB;
+    this.mode = lampStatus.ModeEnum.RGB;
     
     var _color = stringStatus.substring(8,14);
     var _brightness = stringStatus.substring(16,18);
@@ -283,7 +281,7 @@ function LampStatus(stringStatus) { //build a LampStatus object based on hex val
     this.properties = {color: _color, brightness: parseInt(_brightness, 16)};
   }
   else if(mode == '02'){
-    this.mode = LampStatus.ModeEnum.WHITE;
+    this.mode = lampStatus.ModeEnum.WHITE;
     
     var _temperature = stringStatus.substring(18, 22);
     var _brightness = stringStatus.substring(16,18);
@@ -291,10 +289,10 @@ function LampStatus(stringStatus) { //build a LampStatus object based on hex val
     this.properties = {temperature: parseInt(_temperature, 16), brightness: parseInt(_brightness, 16)};
   }
   else if(mode == '03')
-    this.mode = LampStatus.ModeEnum.FLOW;
+    this.mode = lampStatus.ModeEnum.FLOW;
 }
 
-LampStatus.ModeEnum = {
+lampStatus.ModeEnum = {
   RGB: 1,
   WHITE: 2,
   FLOW: 3

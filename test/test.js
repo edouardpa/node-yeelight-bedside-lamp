@@ -7,8 +7,6 @@ var yee = require('../index.js');
 
 var path = require('path');
 
-var debug = require('debug')('../index.js');
-
 var periphs = [];
 var yeee;
 var _socket;
@@ -32,7 +30,7 @@ io.sockets.on('connection', function (socket) {
   socket.on('search', function (message) {
     console.log('Search !!!');
     
-    yee.YeelightBluetooth.Discover(function(peripheral){
+    yee.YeelightBluetooth.discover(function(peripheral){
       socket.emit('discover', 'periph found : ' + peripheral.uuid);
       periphs.push(peripheral);
     });
@@ -41,42 +39,42 @@ io.sockets.on('connection', function (socket) {
   socket.on('periph_co', function (message) {
     console.log('connect to periph : ' + message);
     
-    yee.YeelightBluetooth.Connect(periphs[message], function(yeeobj){
+    yee.YeelightBluetooth.connect(periphs[message], function(yeeobj){
       yeee = yeeobj;
-      yeee.SetNotificationCallback(notifs);
+      yeee.setNotificationCallback(notifs);
     });
   });
   
   socket.on('co_pair', function(message) {
     console.log('co pair !!');
-    yeee.ConnectPair(function(result) {
+    yeee.connectPair(function(result) {
       socket.emit('notifs', 'CO pair : ' + JSON.stringify(result));
     });
   });
   
   socket.on('turn_on', function(message) {
     console.log('turn on !!');
-    yeee.TurnOn();
+    yeee.turnOn();
   });
   
   socket.on('turn_off', function(message) {
     console.log('turn off !!');
-    yeee.TurnOff();
+    yeee.turnOff();
   });
   
   socket.on('white', function(message) {
     console.log('white');
-    yeee.WhiteLight(message.temperature, message.brightness);
+    yeee.whiteLight(message.temperature, message.brightness);
   });
   
   socket.on('rgb', function(message) {
     console.log('RGB');
-    yeee.RGBLight(message.red, message.green, message.blue, message.brightness);
+    yeee.rgbLight(message.red, message.green, message.blue, message.brightness);
   });
   
   socket.on('statusGet', function(message) {
     console.log('get status !!');
-    yeee.LampState(function(status){
+    yeee.lampState(function(status){
       socket.emit('status', 'Lamp : ' + JSON.stringify(status));
     });
   });
