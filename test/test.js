@@ -5,13 +5,17 @@ var server = http.createServer(app);
 
 var yee = require('../index.js');
 
+var LampDao = require('./dao/lampdao');
+
 var path = require('path');
 
 var periphs = [];
-var yeee;
+var yeeLamps = [];
 var _socket;
 
-function notifs(message){
+function notifs(yeelightLamp, message){
+  //TODO handle yeelightLamp to match the right in yeeLamps
+  
   _socket.emit('notifs', 'notifs : '+ JSON.stringify(message));
 }
 
@@ -40,14 +44,14 @@ io.sockets.on('connection', function (socket) {
     console.log('connect to periph : ' + message);
     
     yee.YeelightBluetooth.connect(periphs[message], function(yeeobj){
-      yeee = yeeobj;
-      yeee.setNotificationCallback(notifs);
+      yeeLamps.push(yeeobj);
+      yeeobj.setNotificationCallback(notifs);
     });
   });
   
   socket.on('co_pair', function(message) {
     console.log('co pair !!');
-    yeee.connectPair(function(result) {
+    yeee.connectPair(function(result) { //TODO handle it another way
       socket.emit('notifs', 'CO pair : ' + JSON.stringify(result));
     });
   });
@@ -87,4 +91,35 @@ io.sockets.on('connection', function (socket) {
 server.listen(process.env.PORT || 50505, process.env.IP || "0.0.0.0", function(){
   var addr = server.address();
   console.log('Server listening at' + addr.address + ':' + addr.port);
+  
+  startSequence();
 });
+
+function startSequence(){
+  (new LampDao()).getLamps(function(lamps){
+    if(lamps !== null || lamps.length > 0){
+      yee.YeelightBluetooth.discover(function(peripheral){
+        for(var i=0; i<lamps.length; i++){
+          if(lamps[i].address == peripheral.address){
+            lamps[i].state = stateEnum.THERE;
+            
+            lamps[i].peripheral = peripheral;
+            
+            yee.YeelightBluetooth.connect(peripheral, function(yeeobj){
+              yeeLamps.push(yeeobj);
+              yeeobj.setNotificationCallback(notifs);
+            });
+          }
+          else{
+            lamps[i].state = stateEnum.NOT_THERE;
+          }
+        }
+      });
+    }
+  });
+}
+
+var stateEnum = {
+  THERE: 1,
+  NOT_THERE: 2
+};

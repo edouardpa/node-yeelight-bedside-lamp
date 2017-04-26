@@ -6,7 +6,7 @@ var NOTIFY_CHARACT_UUID = '8f65073d9f574aaaafea397d19d5bbeb';
 var COMMAND_CHARACT_UUID = 'aa7d3f342d4f41e0807f52fbf8cf7443';
 
 function YeelightBluetooth() {
-  this.DiscoverCallback = null;
+  this.discoverCallback = null;
 }
 
 YeelightBluetooth.discover = function(callback, timeout) {
@@ -84,11 +84,11 @@ function YeelightLamp(peripheral) {
       self.lampStateCallback = null;
     }
     else if(packetType == '45' && self.notifCallback != null)
-      self.notifCallback(new LampStatus(data.toString('hex')));
+      self.notifCallback(self, new LampStatus(data.toString('hex')));
     else if(packetType == '63' && self.notifCallback != null){
       var status = data.toString('hex').substring(4,6);
       
-      self.notifCallback(parsePairingStatus(status));
+      self.notifCallback(self, parsePairingStatus(status));
     }
     else
       console.log('WARNING !!!!!!!!! : unknown packet type !');

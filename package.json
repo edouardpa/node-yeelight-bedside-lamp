@@ -7,6 +7,9 @@
   "author": "EdouardP",
   "dependencies": {
     "noble": "*",
+    "sequelize": "*",
+    "sequelize-cli": "*",
+    "sqlite3": "*",
     "socket.io": "*", 
     "express": "*"
   }

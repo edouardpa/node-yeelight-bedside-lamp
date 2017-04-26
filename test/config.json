@@ -1,0 +1,10 @@
+{
+  "development": {
+    "username": "",
+    "password": null,
+    "database": "lamp_db",
+    "host": "127.0.0.1",
+    "dialect": "sqlite",
+    "storage": "./lamp_db.sqlite"
+  }
+}
