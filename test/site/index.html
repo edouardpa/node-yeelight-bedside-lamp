@@ -11,7 +11,12 @@
         </div>
         
         <div>
-            <input id="itemNumberInput" autocomplete="off" /><button id="itemNumberBtn">Send</button>
+            <!-- une balise select ou input ne peut pas être imbriquée directement dans form -->
+            <select id="devices_list_id" name="devices_list">
+                <option value="address">Name</option>
+                <!-- fill it when received result from search -->
+            </select>
+            <button id="itemNumberBtn">Send</button>
         </div>
         
         <div>
@@ -43,47 +48,51 @@
         <script>
             var socket = io();
             $('#searchBtn').click(function(){
+                $('#devices_list_id').empty();
+                
                 socket.emit('search', 'blabla');
             });
             
             $('#itemNumberBtn').click(function(){
-                socket.emit('periph_co', $('#itemNumberInput').val());
+                socket.emit('periph_co', $('#devices_list_id').find(":selected").val());
             });
             
             $('#copairBtn').click(function(){
-                socket.emit('co_pair', 'blabla');
+                socket.emit('co_pair', $('#devices_list_id').find(":selected").val());
             });
             
             $('#turnonBtn').click(function(){
-                socket.emit('turn_on', 'blabla');
+                socket.emit('turn_on', $('#devices_list_id').find(":selected").val());
             });
             
             $('#turnoffBtn').click(function(){
-                socket.emit('turn_off', 'blabla');
+                socket.emit('turn_off', $('#devices_list_id').find(":selected").val());
             });
             
             $('#statusBtn').click(function(){
-                socket.emit('statusGet', 'blabla');
+                socket.emit('statusGet', $('#devices_list_id').find(":selected").val());
             });
             
             $('#whiteBtn').click(function(){
-                socket.emit('white', {temperature: $('#temperatureInput').val(), brightness: $('#brightnessWhiteInput').val()});
+                socket.emit('white', {uuid: $('#devices_list_id').find(":selected").val(), temperature: $('#temperatureInput').val(), brightness: $('#brightnessWhiteInput').val()});
             });
             
             $('#rgbBtn').click(function(){
-                socket.emit('rgb', {red: $('#redInput').val(), green: $('#greenInput').val(), blue: $('#blueInput').val(), brightness: $('#brightnessRGBInput').val()});
+                socket.emit('rgb', {uuid: $('#devices_list_id').find(":selected").val(), red: $('#redInput').val(), green: $('#greenInput').val(), blue: $('#blueInput').val(), brightness: $('#brightnessRGBInput').val()});
             });
             
             socket.on('discover', function (message) {
-              console.log('discover : ' + message);
+                $('#devices_list_id').append('<option value="'+ message.uuid +'">'+ message.name +'</option>');
+                
+                console.log('discover : ' + message.name);
             });
             
-            socket.on('notifs', function (message) {
-              console.log('notifs : ' + message);
+            socket.on('notifs', function (message) { //TODO
+                console.log('notifs : ' + message);
             });
             
-            socket.on('status', function (message) {
-              console.log('status : ' + message);
+            socket.on('status', function (message) { //TODO
+                console.log('status : ' + message);
             });
         </script>
     </body>

@@ -52,13 +52,13 @@ function YeelightLamp(peripheral) {
   
   function parsePairingStatus(pairStatusString){
     if(pairStatusString == '01')
-      return YeelightLamp.ConnectPairEnum.UNAUTHORIZED;
+      return YeelightLamp.connectPairEnum.UNAUTHORIZED;
     else if(pairStatusString == '02')
-      return YeelightLamp.ConnectPairEnum.PAIRED;
+      return YeelightLamp.connectPairEnum.PAIRED;
     else if(pairStatusString == '04')
-      return YeelightLamp.ConnectPairEnum.AUTHORIZED;
+      return YeelightLamp.connectPairEnum.AUTHORIZED;
     else if(pairStatusString == '07')
-      return YeelightLamp.ConnectPairEnum.DISCONNECT_IMMINENT;
+      return YeelightLamp.connectPairEnum.DISCONNECT_IMMINENT;
     else
       console.log('WARNING !!!!!!!!! : unknown code !');
   }
@@ -74,21 +74,21 @@ function YeelightLamp(peripheral) {
       var status = data.toString('hex').substring(4,6);
       console.log('DEBUG : (status)'+status);
       
-      self.connectPairCallback(parsePairingStatus(status));
+      self.connectPairCallback(self, parsePairingStatus(status));//TODO
         
       self.connectPairCallback = null;
     }
     else if(packetType == '45' && self.lampStateCallback != null){
-      self.lampStateCallback(new LampStatus(data.toString('hex')));
+      self.lampStateCallback(self, new LampStatus(data.toString('hex')));//TODO
       
       self.lampStateCallback = null;
     }
     else if(packetType == '45' && self.notifCallback != null)
-      self.notifCallback(self, new LampStatus(data.toString('hex')));
+      self.notifCallback(self, new LampStatus(data.toString('hex')));//TODO
     else if(packetType == '63' && self.notifCallback != null){
       var status = data.toString('hex').substring(4,6);
       
-      self.notifCallback(self, parsePairingStatus(status));
+      self.notifCallback(self, parsePairingStatus(status));//TODO
     }
     else
       console.log('WARNING !!!!!!!!! : unknown packet type !');

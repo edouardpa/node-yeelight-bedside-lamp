@@ -16,7 +16,7 @@ var _socket;
 function notifs(yeelightLamp, message){
   //TODO handle yeelightLamp to match the right in yeeLamps
   
-  _socket.emit('notifs', 'notifs : '+ JSON.stringify(message));
+  _socket.emit('notifs', 'notifs : '+ yeelightLamp.peripheral.name + ' - ' + JSON.stringify(message));
 }
 
 app.get('/', function(req, res) {
@@ -33,54 +33,102 @@ io.sockets.on('connection', function (socket) {
   
   socket.on('search', function (message) {
     console.log('Search !!!');
+    periphs = [];
     
     yee.YeelightBluetooth.discover(function(peripheral){
-      socket.emit('discover', 'periph found : ' + peripheral.uuid);
       periphs.push(peripheral);
+      
+      socket.emit('discover', {name: peripheral.advertisement.localName, uuid: peripheral.uuid});
     });
   });
   
   socket.on('periph_co', function (message) {
     console.log('connect to periph : ' + message);
     
-    yee.YeelightBluetooth.connect(periphs[message], function(yeeobj){
-      yeeLamps.push(yeeobj);
-      yeeobj.setNotificationCallback(notifs);
-    });
+    for(var i=0; i<periphs.length; i++){
+      if(periphs[i].uuid == message){
+        yee.YeelightBluetooth.connect(periphs[i], function(yeeobj){
+          yeeLamps.push(yeeobj);
+          yeeobj.setNotificationCallback(notifs);
+        });
+      }
+    }
   });
   
   socket.on('co_pair', function(message) {
     console.log('co pair !!');
-    yeee.connectPair(function(result) { //TODO handle it another way
-      socket.emit('notifs', 'CO pair : ' + JSON.stringify(result));
-    });
+    
+    for(var i=0; i<yeeLamps.length; i++){
+      console.log('UUID : '+yeeLamps[i].peripheral.uuid);
+      
+      if(yeeLamps[i].peripheral.uuid == message){
+        yeeLamps[i].connectPair(function(yeelightLamp, result) {
+          socket.emit('notifs', 'CO pair : '+ yeelightLamp.peripheral.name + ' - ' + JSON.stringify(result));
+        });
+      }
+    }
   });
   
   socket.on('turn_on', function(message) {
     console.log('turn on !!');
-    yeee.turnOn();
+    
+    for(var i=0; i<yeeLamps.length; i++){
+      console.log('UUID : '+yeeLamps[i].peripheral.uuid);
+      
+      if(yeeLamps[i].peripheral.uuid == message){
+        yeeLamps[i].turnOn();
+      }
+    }
   });
   
   socket.on('turn_off', function(message) {
     console.log('turn off !!');
-    yeee.turnOff();
+    
+    for(var i=0; i<yeeLamps.length; i++){
+      console.log('UUID : '+yeeLamps[i].peripheral.uuid);
+      
+      if(yeeLamps[i].peripheral.uuid == message){
+        yeeLamps[i].turnOff();
+      }
+    }
   });
   
   socket.on('white', function(message) {
     console.log('white');
-    yeee.whiteLight(message.temperature, message.brightness);
+    
+    for(var i=0; i<yeeLamps.length; i++){
+      console.log('UUID : '+yeeLamps[i].peripheral.uuid);
+      
+      if(yeeLamps[i].peripheral.uuid == message){
+        yeeLamps[i].whiteLight(message.temperature, message.brightness);
+      }
+    }
   });
   
   socket.on('rgb', function(message) {
     console.log('RGB');
-    yeee.rgbLight(message.red, message.green, message.blue, message.brightness);
+    
+    for(var i=0; i<yeeLamps.length; i++){
+      console.log('UUID : '+yeeLamps[i].peripheral.uuid);
+      
+      if(yeeLamps[i].peripheral.uuid == message){
+        yeeLamps[i].rgbLight(message.red, message.green, message.blue, message.brightness);
+      }
+    }
   });
   
   socket.on('statusGet', function(message) {
     console.log('get status !!');
-    yeee.lampState(function(status){
-      socket.emit('status', 'Lamp : ' + JSON.stringify(status));
-    });
+    
+    for(var i=0; i<yeeLamps.length; i++){
+      console.log('UUID : '+yeeLamps[i].peripheral.uuid);
+      
+      if(yeeLamps[i].peripheral.uuid == message){
+        yeeLamps[i].lampState(function(yeelightLamp, status){
+          socket.emit('status', 'Lamp : '+ yeelightLamp.peripheral.name + ' - ' + JSON.stringify(status));
+        });
+      }
+    }
   });
   
   socket.on('disconnect', function () {
